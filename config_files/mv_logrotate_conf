@@ -1,0 +1,12 @@
+/var/log/mvault/*.log {
+        daily
+        missingok
+        rotate 52
+        compress
+        delaycompress
+        notifempty
+        create 0644 root adm
+        postrotate
+        sudo supervisorctl restart demo_mdm:\*
+        endscript
+}
