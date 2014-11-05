@@ -1,21 +1,21 @@
 import json
 from binascii import b2a_base64 as e64
 import threading
-import ipdb
+# import ipdb
 import tornado
 from tornado.web import asynchronous
 from logger import Logger
-from db.constants import Constants as c
 from db.helpers.login import LoginDBHelper
 from db.helpers.company import CompanyDBHelper
 from .manage_pass import make_verifier
 from .admin_mailer import admin_signup
 
+
 class RegisterHandler(tornado.web.RequestHandler):
 
     def options(self):
         self.add_header('Access-Control-Allow-Methods',
-                                      'GET,POST, PUT,OPTIONS')
+                        'GET,POST, PUT,OPTIONS')
         self.add_header('Access-Control-Allow-Headers',
                         'Origin, X-Requested-With, Content-Type, Accept')
         self.add_header('Access-Control-Allow-Origin', '*')
@@ -29,15 +29,17 @@ class RegisterHandler(tornado.web.RequestHandler):
     def on_complete(self):
         self.finish()
 
+
 class RegisterWorkerThread(threading.Thread):
-    def __init__(self, request =None, callback=None):
+
+    def __init__(self, request=None, callback=None):
         threading.Thread.__init__(self)
         self.request = request
         self.callback = callback
 
     def run(self):
-        log = Logger('RegisterWorkerThread')
-        TAG = 'run'
+        # log = Logger('RegisterWorkerThread')
+        # TAG = 'run'
         print 'RegisterWorkerThread'
         final_dict = {}
 
@@ -55,11 +57,11 @@ class RegisterWorkerThread(threading.Thread):
         admin_password = request_data.get('admin_password')
 
         company_id, duplicate_company = company.add_company(
-                {'name': company_name, 'email': company_email,
-                 'contact': company_contact, 'address': company_address})
+            {'name': company_name, 'email': company_email,
+             'contact': company_contact, 'address': company_address})
 
         # if company_id and duplicate_company:
-        #     ## Send mail to admin registered for this company
+        # Send mail to admin registered for this company
         #     pass
 
         if company_id:
@@ -70,22 +72,21 @@ class RegisterWorkerThread(threading.Thread):
 
             if pass_id:
                 admin_id, duplicate_admin = admin.add_admin(
-                    {'email':admin_email, 'name': admin_name,
-                    'login_id': pass_id, 'company_id':company_id})
+                    {'email': admin_email, 'name': admin_name,
+                     'login_id': pass_id, 'company_id': company_id})
 
                 if admin_id and duplicate_admin:
-                    ## Admin already registered, set pass false
+                    # Admin already registered, set pass false
                     final_dict['admin'] = True
                     final_dict['pass'] = False
-
 
                 elif admin_id and not duplicate_admin:
                     final_dict['pass'] = True
                     final_dict['admin'] = False
 
-                    ## send verification mail to this admin
+                    # send verification mail to this admin
                     admin_signup(admin_id, company_id, admin_email,
-                                          company_email)
+                                 company_email)
                 else:
                     final_dict['pass'] = False
                     final_dict['admin'] = False
