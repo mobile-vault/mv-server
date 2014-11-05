@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
-from os.path import abspath, dirname
-from sys import path
+# from os.path import abspath, dirname
+# from sys import path
 
 from celery import Celery
 
@@ -29,6 +29,7 @@ def create_android_task(json_dict, device_id):
     command_instance.execute(json_dict, device_id)
     print 'Execution completed'
 '''
+
 
 @celery.task
 def create_command_handler_task(policy_dict):

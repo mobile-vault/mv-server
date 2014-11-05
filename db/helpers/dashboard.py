@@ -1,8 +1,7 @@
-import psycopg2
-from base import *
+from .base import *
 from logger import Logger
-from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
-from db.constants import Constants as C
+# from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+# from db.constants import Constants as C
 
 
 class DashboardDBHelper(DBHelper):
@@ -14,18 +13,17 @@ class DashboardDBHelper(DBHelper):
     def get_devices(self, company_id):
         TAG = 'get_devices'
 
-        result_dict ={}
+        result_dict = {}
         os_list = ['ios', 'samsung']
-        
+
         for device_os in os_list:
 
             try:
                 self.cursor.execute("""SELECT COUNT(*) FROM  devices
                     INNER JOIN users ON devices.user_id=users.id
-                    WHERE devices.os='{0}' AND users.company_id={1} 
+                    WHERE devices.os='{0}' AND users.company_id={1}
                     AND users.deleted=False AND devices.deleted=False
-                    ;""".format(device_os,
-                    company_id))
+                    ;""".format(device_os, company_id))
 
                 if self.cursor.rowcount > 0:
                     row = self.cursor.fetchone()
@@ -35,7 +33,7 @@ class DashboardDBHelper(DBHelper):
                 else:
                     return None
 
-            except Exception, err:
+            except Exception as err:
                 self.log.e(TAG, repr(err))
                 return None
 
