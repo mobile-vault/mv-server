@@ -3,94 +3,97 @@ import json
 import copy
 #import ipdb
 
+
 class Parser(object):
 
-    def parse_application(self,application):
+    def parse_application(self, application):
         '''
         Parses the application dictionary returns another dictionary that only
         has the parameters required by the device to execute the commands.
         '''
         result = dict()
 
-        #Installed Apps
-        installed_apps=application.get('installed_apps')
+        # Installed Apps
+        installed_apps = application.get('installed_apps')
         result['installed_apps'] = list()
         if installed_apps is not None:
             for installed_app in installed_apps:
                 if 'android' in installed_app and installed_app['android']:
-                    result['installed_apps'].append({'id':installed_app['id']})
+                    result['installed_apps'].append(
+                        {'id': installed_app['id']})
 
-        #Removed apps
+        # Removed apps
         removed_apps = application.get('removed_apps')
         result['removed_apps'] = list()
         if removed_apps is not None:
             for removed_app in removed_apps:
                 if 'android' in removed_app and removed_app['android']:
-                    result['removed_apps'].append({'id':removed_app['id']})
+                    result['removed_apps'].append({'id': removed_app['id']})
 
-        #Blacklisted apps
+        # Blacklisted apps
         blacklisted_apps = application.get('blacklisted_apps')
         result['blacklisted_apps'] = list()
         if blacklisted_apps is not None:
             for blacklisted_app in blacklisted_apps:
                 if 'android' in blacklisted_app and blacklisted_app['android']:
-                    result['blacklisted_apps'].append({'id':blacklisted_app['id']})
-        #Now a generic loop to find all other things mentioned.
+                    result['blacklisted_apps'].append(
+                        {'id': blacklisted_app['id']})
+        # Now a generic loop to find all other things mentioned.
         for item in application:
-            #ignore the ones which are list... Just go through the dicts
+            # ignore the ones which are list... Just go through the dicts
             if isinstance(application[item], dict):
-                if 'android' in application[item] and application[item]['android']:
-                    result[item]= application[item]
+                if 'android' in application[
+                        item] and application[item]['android']:
+                    result[item] = application[item]
                     del result[item]['android']
                     del result[item]['iOS']
         return result
 
-
-    def parse_hardware(self,hardware):
+    def parse_hardware(self, hardware):
         result = dict()
         for item in hardware:
-            #ignore the ones which are list... Just go through the dicts
+            # ignore the ones which are list... Just go through the dicts
             if isinstance(hardware[item], dict):
                 if 'android' in hardware[item] and hardware[item]['android']:
-                    result[item]= hardware[item]
+                    result[item] = hardware[item]
                     del hardware[item]['android']
                     del hardware[item]['iOS']
         return result
 
-
-    def parse_settings(self,settings):
+    def parse_settings(self, settings):
         result = dict()
         for item in settings:
             if isinstance(settings[item], dict):
                 if 'android' in settings[item] and settings[item]['android']:
-                    result[item]= settings[item]
+                    result[item] = settings[item]
                     del settings[item]['android']
                     del settings[item]['iOS']
         return result
 
-
-    def parse_wifi(self,wifis):
-        result =copy.deepcopy(wifis)
-        if isinstance(result,dict) and 'installed_wifis' in result:
+    def parse_wifi(self, wifis):
+        result = copy.deepcopy(wifis)
+        if isinstance(result, dict) and 'installed_wifis' in result:
             for wifi in result['installed_wifis']:
                 if 'android' in wifi and 'iOS' in wifi:
                     del wifi['android']
                     del wifi['iOS']
             return result
 
-    def parse_vpn(self,vpns):
+    def parse_vpn(self, vpns):
         result = copy.deepcopy(vpns)
-        if isinstance(result,dict) and 'installed_vpns' in vpns:
+        if isinstance(result, dict) and 'installed_vpns' in vpns:
             for vpn in result['installed_vpns']:
                 if 'android' in vpn and 'iOS' in vpn:
                     del vpn['android']
                     del vpn['iOS']
             return result
 
-    def parse_bluetooth(self,bluetooth):
+    def parse_bluetooth(self, bluetooth):
         if bluetooth is not None:
-            #ipdb.set_trace()
-            if 'bluetooth_status' in bluetooth and 'android' in bluetooth['bluetooth_status'] and 'iOS' in bluetooth['bluetooth_status']:
+            # ipdb.set_trace()
+            if ('bluetooth_status' in bluetooth
+                    and 'android' in bluetooth['bluetooth_status']
+                    and 'iOS' in bluetooth['bluetooth_status']):
                 del bluetooth['bluetooth_status']['android']
                 del bluetooth['bluetooth_status']['iOS']
             if 'white_listed_pairings' in bluetooth:
@@ -105,15 +108,15 @@ class Parser(object):
                         del pairing['iOS']
         return bluetooth
 
-    def parse_access(self,access):
-        if isinstance(access,dict):
+    def parse_access(self, access):
+        if isinstance(access, dict):
             for item in access:
-                if isinstance(access[item], dict) and 'android' in access[item] and 'iOS' in access[item]:
+                if (isinstance(access[item], dict)
+                        and 'android' in access[item]
+                        and 'iOS' in access[item]):
                     del access[item]['android']
                     del access[item]['iOS']
         return access
-
-
 
 
 if __name__ == "__main__":
@@ -123,4 +126,3 @@ if __name__ == "__main__":
     '''
     d = json.loads(j)
     print Parser().parse_application(d)
-

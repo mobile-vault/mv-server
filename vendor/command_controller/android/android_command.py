@@ -10,7 +10,9 @@ import config
 from db.helpers.samsung_command import SamsungCommandsDBHelper
 import uuid
 
+
 class AndroidCommand(Engine):
+
     '''
     Send Commands to Samsung
     '''
@@ -29,118 +31,127 @@ class AndroidCommand(Engine):
         print 'sending to android' + str(device_id)
 
         device_details_helper = DeviceDetailsDBHelper()
-        #Get the details of device from device_details table
-        details=device_details_helper.get_device_details(str(device_id))
+        # Get the details of device from device_details table
+        details = device_details_helper.get_device_details(str(device_id))
         if details is not None:
-            #load the extras field. This is important here that the extras
-            #field should be of dict type (and not json string)
+            # load the extras field. This is important here that the extras
+            # field should be of dict type (and not json string)
             extras = details[C.DEVICE_DETAILS_TABLE_EXTRAS]
             if C.DEVICE_DETAILS_TABLE_GCM_REG_NO not in extras:
-                self.log.e(TAG, 'gcm details not specified in '+str(extras))
+                self.log.e(TAG, 'gcm details not specified in ' + str(extras))
             else:
-                gcm= GCM(config.GCM_KEY) #GCM Key for sending commands to GCM server
-                reg_id = [extras[C.DEVICE_DETAILS_TABLE_GCM_REG_NO]] #reg id of device
+                # GCM Key for sending commands to GCM server
+                gcm = GCM(config.GCM_KEY)
+                reg_id = [
+                    extras[
+                        C.DEVICE_DETAILS_TABLE_GCM_REG_NO]]  # reg id of device
 
-                #Now create a dict to be sent to the device
+                # Now create a dict to be sent to the device
                 data = dict()
-                data['attributes']= self.get_payload(json_dict)
+                data['attributes'] = self.get_payload(json_dict)
                 if 'action_command' in json_dict:
                     ui_action = json_dict['action_command']
                     if ui_action in action_mapper:
                         data['action'] = action_mapper.get(ui_action)
                     elif ui_action == 'device_lock':
-                        data['attributes']['passcode'] = json_dict.get('passcode')
+                        data['attributes'][
+                            'passcode'] = json_dict.get('passcode')
                         data['action'] = ui_action
                     else:
-                        data['action']= ui_action
+                        data['action'] = ui_action
                 elif 'broadcast_command' in json_dict:
                     data['action'] = 'notification'
                     data['attributes']['data'] = {}
                     data['attributes']['data']['message'] = json_dict.get(
-                                            'broadcast_command')
-                    data['attributes']['data']['title'] = 'Its Your GodFather!!!'
+                        'broadcast_command')
+                    data['attributes']['data'][
+                        'title'] = 'Its Your GodFather!!!'
                 else:
-                    data['action']='policy'
+                    data['action'] = 'policy'
 
                 if data['action'] == 'device_information':
                     command_uuid = special_uuid + str(device_id)
                 else:
                     command_uuid = str(uuid.uuid4())
                 data['attributes']['command_uuid'] = command_uuid
-                print 'sending data as ',json.dumps(data)
-                #print 'sending gcm command to device'
+                print 'sending data as ', json.dumps(data)
+                # print 'sending gcm command to device'
                 print reg_id, data
                 response = gcm.json_request(reg_id, data)
                 print '\n \n response is \n', response
                 if 'errors' in response:
                     for error, reg_ids in response['errors'].items():
                         if error == 'MalformedJson':
-                            self.log.e(TAG,error)
+                            self.log.e(TAG, error)
                         elif error == 'Connection':
-                            self.log.e(TAG,error)
+                            self.log.e(TAG, error)
                         elif error == 'Authentication':
-                            self.log.e(TAG,error)
+                            self.log.e(TAG, error)
                         elif error == 'TooManyRegIds':
-                            self.log.e(TAG,error)
+                            self.log.e(TAG, error)
                         elif error == 'NoCollapseKey':
-                            self.log.e(TAG,error)
+                            self.log.e(TAG, error)
                         elif error == 'InvalidTtl':
-                            self.log.e(TAG,error)
+                            self.log.e(TAG, error)
                         elif error == 'MissingRegistration':
-                            self.log.e(TAG,error)
+                            self.log.e(TAG, error)
                         elif error == 'NotRegistered':
-                            self.log.e(TAG,error)
+                            self.log.e(TAG, error)
                         elif error == 'MessageTooBig':
-                            # Divide the message in smaller dependent chunks and send it to device.
+                            # Divide the message in smaller dependent chunks
+                            # and send it to device.
                             gcm.json_request(reg_id, data)
-                            self.log.e(TAG,error)
+                            self.log.e(TAG, error)
                         elif error == 'InvalidRegistration':
-                            self.log.e(TAG,error)
+                            self.log.e(TAG, error)
                         elif error == 'Unavailable':
-                            self.log.e(TAG,error)
+                            self.log.e(TAG, error)
                         elif error == 'MismatchSenderId':
-                            self.log.e(TAG,error)
+                            self.log.e(TAG, error)
                         else:
-                            self.log.e(TAG,'New Error Type: '+error)
+                            self.log.e(TAG, 'New Error Type: ' + error)
                 else:
                     print response
                     samsung = SamsungCommandsDBHelper()
                     cmd = dict()
-                    cmd[C.SAMSUNG_COMMANDS_TABLE_ACTION]= data.get('action')
-                    cmd[C.SAMSUNG_COMMANDS_TABLE_ATTRIBUTE]=json.dumps(json_dict)
-                    cmd[C.SAMSUNG_COMMANDS_TABLE_DEVICE]=device_id
-                    cmd[C.SAMSUNG_COMMANDS_TABLE_UUID]= command_uuid
+                    cmd[C.SAMSUNG_COMMANDS_TABLE_ACTION] = data.get('action')
+                    cmd[C.SAMSUNG_COMMANDS_TABLE_ATTRIBUTE] = json.dumps(
+                        json_dict)
+                    cmd[C.SAMSUNG_COMMANDS_TABLE_DEVICE] = device_id
+                    cmd[C.SAMSUNG_COMMANDS_TABLE_UUID] = command_uuid
                     status = samsung.add_command(cmd)
-                    #print "\n\n command to send is \n\n", cmd
+                    # print "\n\n command to send is \n\n", cmd
                     print "\n printing status of adding command into \
                             samung command table\n", status
 
 #             except Exception,err:
 #                 self.log.e(TAG,"Exception "+repr(err))
         else:
-            self.log.e(TAG,'No details found for device id = '+str(device_id))
+            self.log.e(
+                TAG,
+                'No details found for device id = ' +
+                str(device_id))
 
-
-    def get_payload(self,raw_data):
+    def get_payload(self, raw_data):
         payload = dict()
         from vendor.command_controller.android.dictionary_parser import Parser
         parser = Parser()
 
-        applications=raw_data.get('applications')
+        applications = raw_data.get('applications')
         if applications is not None:
             payload['application'] = parser.parse_application(applications)
 
         hardwares = raw_data.get('hardware')
         if hardwares is not None:
-            payload['hardware']= parser.parse_hardware(hardwares)
+            payload['hardware'] = parser.parse_hardware(hardwares)
 
         settings = raw_data.get('settings')
         if settings is not None:
-            payload['settings']= parser.parse_settings(settings)
+            payload['settings'] = parser.parse_settings(settings)
 
         wifis = raw_data.get('wifi')
         if wifis is not None:
-            payload['wifi']= parser.parse_wifi(wifis);
+            payload['wifi'] = parser.parse_wifi(wifis)
 
         vpns = raw_data.get('vpn')
         if vpns is not None:
@@ -152,11 +163,11 @@ class AndroidCommand(Engine):
 
         access = raw_data.get('access')
         if access is not None:
-            payload['access']= parser.parse_access(access)
+            payload['access'] = parser.parse_access(access)
 
         attributes = raw_data.get('data')
         if attributes is not None:
-            payload['data']=raw_data.get('data')
+            payload['data'] = raw_data.get('data')
 
         return payload
 
@@ -300,7 +311,7 @@ if __name__ == '__main__':
     '''
     vpn_json = json.loads(vpn)
 
-    hardware= '''
+    hardware = '''
     {
         "enable_camera": {
             "value": true,
@@ -331,7 +342,7 @@ if __name__ == '__main__':
     '''
     hardware_json = json.loads(hardware)
 
-    settings ='''
+    settings = '''
     {
     "enable_background_data": {
         "value": true,
@@ -464,7 +475,7 @@ if __name__ == '__main__':
 
     eng = AndroidCommand()
     json_dict = dict()
-    json_dict['action']='notification'
+    json_dict['action'] = 'notification'
     json_dict['data'] = 'Good morning company!'
 #     json_dict['application']= app_json
 #     json_dict['wifi']= wifi_json
@@ -473,5 +484,5 @@ if __name__ == '__main__':
 #     json_dict['settings']=settings_json
 #     json_dict['bluetooth']= bluetooth_json
 #     json_dict['access']= access_json
-    #print json.dumps(json_dict)
+    # print json.dumps(json_dict)
     eng.execute(json_dict, 1)
