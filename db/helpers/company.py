@@ -1,20 +1,19 @@
 '''
 Company DB Helper With Postgress
 '''
-
-import psycopg2
-from base import *
+from .base import *
 from logger import Logger
-from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT, adapt
+from psycopg2.extensions import adapt
 from db.constants import Constants as C
 
 
 class CompanyDBHelper(DBHelper):
+
     def __init__(self):
         DBHelper.__init__(self)
         self.log = Logger('CompanyDBHelper')
 
-    def is_company_valid(self,company_id):
+    def is_company_valid(self, company_id):
         TAG = 'is_company_valid'
 
         if isinstance(company_id, str):
@@ -22,9 +21,9 @@ class CompanyDBHelper(DBHelper):
                 self.cursor.execute("""SELECT id FROM companies
                                 WHERE {0}={1} AND deleted=False
                                 ;""".format(C.COMPANY_TABLE_ID,
-                                company_id))
+                                            company_id))
 
-            except Exception, err:
+            except Exception as err:
                 self.log.e(TAG, repr(err))
                 return False
 
@@ -35,11 +34,11 @@ class CompanyDBHelper(DBHelper):
                 return False
         else:
             self.log.i(TAG, "company id = {0} is not of type str".format(
-                                    company_id))
+                company_id))
             return False
 
     def add_company(self, company_dict):
-        TAG= 'add_company'
+        TAG = 'add_company'
         print 'IN add_company'
         cm = company_dict
         duplicate = False
@@ -65,10 +64,8 @@ class CompanyDBHelper(DBHelper):
                     self.cursor.execute("""INSERT INTO companies (name, email,
                                   contact, address) VALUES ({0}, {1}, {2},
                                  {3}) RETURNING id;""".format(
-                                 adapt(cm.get('name')),
-                                  adapt(cm.get('email')),
-                                adapt(cm.get('contact')),
-                                  adapt(cm.get('address'))))
+                        adapt(cm.get('name')), adapt(cm.get('email')),
+                        adapt(cm.get('contact')), adapt(cm.get('address'))))
 
                     if self.cursor.rowcount > 0:
                         row = self.cursor.fetchone()
@@ -76,36 +73,37 @@ class CompanyDBHelper(DBHelper):
                     else:
                         return None, duplicate
 
-            except Exception, err:
+            except Exception as err:
                 self.log.e(TAG, repr(err))
                 return None, duplicate
         else:
             self.log.e(TAG, "parameter are not of type dict")
             return None, duplicate
 
-
-    def set_company_policy(self,company_id,policy_id):
+    def set_company_policy(self, company_id, policy_id):
         TAG = 'set_company_policy'
 
         try:
-            self.cursor.execute("UPDATE "+ C.COMPANY_TABLE + " SET " + C.COMPANY_TABLE_POLICY + " = " + str(policy_id) + " WHERE " + C.COMPANY_TABLE_ID + " = " + str(company_id))
+            self.cursor.execute("UPDATE " + C.COMPANY_TABLE + " SET "
+                                + C.COMPANY_TABLE_POLICY + " = " +
+                                str(policy_id) + " WHERE " +
+                                C.COMPANY_TABLE_ID + " = " + str(company_id))
             if self.cursor.rowcount > 0:
                 return True
             return False
-        except Exception, err:
+        except Exception as err:
             self.log.e(TAG, repr(err))
             return False
 
-
     def get_company(self, company_id):
-        TAG= 'get_company'
+        TAG = 'get_company'
         print 'IN get_company'
 
         try:
 
-            self.cursor.execute("SELECT id, name, policy_id, email FROM " \
-                    + C.COMPANY_TABLE +\
-                     " WHERE " + C.COMPANY_TABLE_ID + " = " + str(company_id))
+            self.cursor.execute("SELECT id, name, policy_id, email FROM "
+                                + C.COMPANY_TABLE + " WHERE " +
+                                C.COMPANY_TABLE_ID + " = " + str(company_id))
 
             if self.cursor.rowcount > 0:
                 row = self.cursor.fetchone()
@@ -117,7 +115,7 @@ class CompanyDBHelper(DBHelper):
                 return return_dict
             else:
                 return None
-        except Exception, err:
+        except Exception as err:
             self.log.e(TAG, repr(err))
             return None
 

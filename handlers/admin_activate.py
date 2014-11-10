@@ -1,39 +1,43 @@
 '''
-This script will handle the activation link sent to admin and make corresponding change in the database to make user activated.
+This script will handle the activation link sent to admin and make
+corresponding change in the database to make user activated.
 '''
-import json
+# import json
 from os import environ
 import threading
 #import ipdb
 import tornado
 from tornado.web import asynchronous
-from logger import Logger
+# from logger import Logger
 from db.helpers.login import LoginDBHelper
 from itsdangerous import (TimedJSONWebSignatureSerializer, BadSignature,
                           SignatureExpired)
-from tornado.template import Template
+# from tornado.template import Template
 from tornado.template import Loader
+
 
 class ActivationLinkHandler(tornado.web.RequestHandler):
 
     @asynchronous
     def get(self, hash_url):
         ActivationWorkerThread(request=self, hash_url=hash_url,
-                      callback=self.on_complete).start()
+                               callback=self.on_complete).start()
 
     def on_complete(self):
         self.finish()
 
+
 class ActivationWorkerThread(threading.Thread):
-    def __init__(self, request =None, hash_url=None, callback=None):
+
+    def __init__(self, request=None, hash_url=None, callback=None):
         threading.Thread.__init__(self)
         self.request = request
         self.callback = callback
         self.hash_url = hash_url
 
     def run(self):
-        log = Logger('ActivationWorkerThread')
-        TAG = 'run'
+        # log = Logger('ActivationWorkerThread')
+        # TAG = 'run'
         print 'ActivationWorkerThread'
 
         ### load html file for rendering ####
@@ -85,5 +89,5 @@ class ActivationWorkerThread(threading.Thread):
             message = 'Sorry! This link was already expired'
 
         self.request.write(loader.load("error_invalid.html").generate(
-                message=message, status=t_status))
+            message=message, status=t_status))
         tornado.ioloop.IOLoop.instance().add_callback(self.callback)

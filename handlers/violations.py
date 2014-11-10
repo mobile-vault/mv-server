@@ -1,4 +1,4 @@
-import cgi
+# import cgi
 import json
 import threading
 
@@ -14,10 +14,12 @@ from db.helpers.violations import *
 
 
 class ViolationRequestHandler(tornado.web.RequestHandler):
+
     @asynchronous
-    def get(self,data):
+    def get(self, data):
         if data is None or len(data) == 0:
-            ViolationsGetHandlerThread(self,callback=self.finish).start()
+            ViolationsGetHandlerThread(self, callback=self.finish).start()
+
 
 class ViolationsGetHandlerThread(threading.Thread):
     user_id = 'user_id'
@@ -32,14 +34,14 @@ class ViolationsGetHandlerThread(threading.Thread):
     user_violation = 0
     violation_id = 'violation_id'
     final_dict = {}
-    def __init__(self, request = None, callback=None,*args, **kwargs):
+
+    def __init__(self, request=None, callback=None, *args, **kwargs):
         super(ViolationsGetHandlerThread, self).__init__(*args, **kwargs)
         self.request = request
         self.callback = callback
 
-
     def run(self):
-        #Return All the users in the User table
+        # Return All the users in the User table
         log = Logger('ViolationsGetHandlerThread')
         TAG = 'run'
 
@@ -47,9 +49,10 @@ class ViolationsGetHandlerThread(threading.Thread):
         violation_list = violation.get_violations()
 
         if violation_list is None:
-            opJson = json.dumps({'pass': True, 'message': 'No Violation in Table'})
+            opJson = json.dumps(
+                {'pass': True, 'message': 'No Violation in Table'})
             #self.request.add_header('Access-Control-Allow-Origin', '*')
-            self.request.set_header ('Content-Type', 'application/json')
+            self.request.set_header('Content-Type', 'application/json')
             self.request.write(opJson)
             tornado.ioloop.IOLoop.instance().add_callback(self.callback)
 
@@ -58,11 +61,14 @@ class ViolationsGetHandlerThread(threading.Thread):
 
             if self.user_id is None:
                 log.e(TAG, 'No user id in Violation List')
-                opJson = json.dumps({'pass': False, 'message': 'No user id in Violation List'})
+                opJson = json.dumps(
+                    {'pass': False, 'message': 'No user id in Violation List'})
                 #self.request.add_header('Access-Control-Allow-Origin', '*')
-                self.request.set_header ('Content-Type', 'application/json')
+                self.request.set_header('Content-Type', 'application/json')
                 self.request.write(opJson)
                 tornado.ioloop.IOLoop.instance().add_callback(self.callback)
             else:
                 user = UserDBHelper()
-                user_list = user.get_user(self.user_id, [c.USER_TABLE_NAME, c.USER_TABLE_EMAIL, ])
+                user_list = user.get_user(
+                    self.user_id, [
+                        c.USER_TABLE_NAME, c.USER_TABLE_EMAIL, ])

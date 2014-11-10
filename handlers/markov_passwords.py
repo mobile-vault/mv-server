@@ -105,6 +105,7 @@ def pairwise(iterable):
 
 
 class MarkovChain(object):
+
     """
     If a system transits from a state to another and the next state depends
     only on the current state and not the past, it is said to be a Markov chain.
@@ -117,6 +118,7 @@ class MarkovChain(object):
     The probabilities are built from the frequencies in the `sample` chain.
     Elements of the sample that are not a valid state are ignored.
     """
+
     def __init__(self, sample):
         self.counts = counts = defaultdict(lambda: defaultdict(int))
         for current, next in pairwise(sample):
@@ -126,7 +128,6 @@ class MarkovChain(object):
             (current, sum(next_counts.itervalues()))
             for current, next_counts in counts.iteritems()
         )
-
 
     def next(self, state):
         """
@@ -151,6 +152,7 @@ class MarkovChain(object):
         while True:
             state = self.next(state)
             yield state
+
 
 def generate_password():
     chain = MarkovChain(

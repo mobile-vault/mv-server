@@ -5,16 +5,19 @@ import threading
 import tornado.ioloop
 import tornado.web
 from tornado.web import asynchronous
-import ipdb
+# import ipdb
 from logger import Logger
 from handlers.super import SuperHandler
 from db.helpers.login import LoginDBHelper
 from .manage_pass import verify_password, make_verifier
 
+
 class AdminRequestHandler(SuperHandler):
 
     def options(self, data):
-        self.add_header('Access-Control-Allow-Methods', 'GET,POST, PUT,OPTIONS')
+        self.add_header(
+            'Access-Control-Allow-Methods',
+            'GET,POST, PUT,OPTIONS')
         self.add_header('Access-Control-Allow-Headers',
                         'Origin, X-Requested-With, Content-Type, Accept')
         #self.add_header('Access-Control-Allow-Origin', '*')
@@ -22,20 +25,27 @@ class AdminRequestHandler(SuperHandler):
     @tornado.web.authenticated
     @asynchronous
     def get(self):
-        AdminGetHandlerThread(self, current_user=self.get_current_user(),
-                    company_id=self.get_current_company(), callback=self.finish).start()
+        AdminGetHandlerThread(
+            self,
+            current_user=self.get_current_user(),
+            company_id=self.get_current_company(),
+            callback=self.finish).start()
 
     @tornado.web.authenticated
     @asynchronous
     def post(self):
-        AdminPostHandlerThread(request=self, current_user=self.get_current_user(),
-                    company_id=self.get_current_company(), callback=self.finish).start()
+        AdminPostHandlerThread(
+            request=self,
+            current_user=self.get_current_user(),
+            company_id=self.get_current_company(),
+            callback=self.finish).start()
 
 
 class AdminGetHandlerThread(threading.Thread):
     final_dict = {}
-    def __init__(self, request = None, callback=None, current_user=None,
-                                        company_id=None, *args, **kwargs):
+
+    def __init__(self, request=None, callback=None, current_user=None,
+                 company_id=None, *args, **kwargs):
         super(AdminGetHandlerThread, self).__init__(*args, **kwargs)
         self.request = request
         self.callback = callback
@@ -43,20 +53,19 @@ class AdminGetHandlerThread(threading.Thread):
         self.company_id = company_id
 
     def run(self):
-        log = Logger('AdminGetHandlerThread')
+        # log = Logger('AdminGetHandlerThread')
         self.final_dict['message'] = ''
         self.final_dict['pass'] = True
 
         data_dict = {}
-        customer_dict = {}
+        # customer_dict = {}
 
         data_dict['username'] = self.current_user
         data_dict['company_id'] = self.company_id
 
         #customer_dict['name'] = 'Toppatch Inc.'
         #data_dict['current_customer'] = customer_dict
-        #ipdb.set_trace()
-
+        # ipdb.set_trace()
 
         # data_dict['groups'] = []
         # data_dict['enabled'] = True
@@ -81,7 +90,7 @@ class AdminGetHandlerThread(threading.Thread):
 
         opJson = json.dumps(self.final_dict)
         #self.request.add_header('Access-Control-Allow-Origin', '*')
-        self.request.set_header ('Content-Type', 'application/json')
+        self.request.set_header('Content-Type', 'application/json')
         self.request.write(opJson)
         tornado.ioloop.IOLoop.instance().add_callback(self.callback)
 
@@ -89,16 +98,15 @@ class AdminGetHandlerThread(threading.Thread):
 class AdminPostHandlerThread(threading.Thread):
 
     def __init__(self, request=None, callback=None, current_user=None,
-                                        company_id=None, *args, **kwargs):
+                 company_id=None, *args, **kwargs):
         super(AdminPostHandlerThread, self).__init__(*args, **kwargs)
         self.request = request
         self.callback = callback
         self.current_user = current_user
         self.company_id = company_id
 
-
     def run(self):
-        log = Logger('AdminPostHandlerThread')
+        # log = Logger('AdminPostHandlerThread')
         request_data = json.loads(self.request.request.body)
         print request_data
         login = LoginDBHelper()
@@ -115,8 +123,7 @@ class AdminPostHandlerThread(threading.Thread):
         else:
             current_password = request_data.get('current_password')
             login_success = verify_password(str(current_password),
-                                        d64(admin_detail.get('password')))
-
+                                            d64(admin_detail.get('password')))
 
             if login_success:
                 login_id = admin_detail.get('login_id')
@@ -124,7 +131,7 @@ class AdminPostHandlerThread(threading.Thread):
                 temp_passwd = make_verifier(str(new_password))
                 new_password_hash = e64(temp_passwd).strip()
                 update_status = login.update_login_password(login_id,
-                                new_password_hash)
+                                                            new_password_hash)
 
             if update_status:
 
@@ -138,6 +145,6 @@ class AdminPostHandlerThread(threading.Thread):
 
         opJson = json.dumps(final_dict)
         #self.request.add_header('Access-Control-Allow-Origin', '*')
-        self.request.set_header ('Content-Type', 'application/json')
+        self.request.set_header('Content-Type', 'application/json')
         self.request.write(opJson)
         tornado.ioloop.IOLoop.instance().add_callback(self.callback)

@@ -1,18 +1,17 @@
-from handlers import (admin, checkin, enroll, login, main,
-                    pass_verify, policies, pre_enroll, roles, teams,
-                    update_token, batch_insert, user, os_type,
-                    broadcast_message, logout, admin_activate, register)
+from handlers import (admin, checkin, enroll, login, main, pass_verify,
+                      policies, pre_enroll, roles, teams, update_token, user,
+                      batch_insert, os_type, broadcast_message, logout,
+                      admin_activate, register)
 from handlers.dashboard import logs as dashboard_logs
 
 from handlers.dashboard import (device_count, enrollment_status,
-                                            session, violations)
+                                session, violations)
 
-from handlers.samsung import (login as samsung_login,
-                                   samsung_command_result)
+from handlers.samsung import (login as samsung_login, samsung_command_result)
 import tornado.web
 import vendor.command_controller.ios.ios_command_handler as ios_command_handler
 
-url_patterns=[   
+url_patterns = [
     (r"/", main.MainHandler),
     (r"/index.html", main.MainHandler),
     (r"/registration", register.RegisterHandler),
@@ -24,7 +23,7 @@ url_patterns=[
     (r"/command/ios", ios_command_handler.IOSCommandHandler),
     (r"/dashboard/devices", device_count.DashboardDeviceCountRequestHandler),
     (r"/dashboard/enrollment",
-                    enrollment_status.DashboardEnrollmentStatusRequestHandler),
+        enrollment_status.DashboardEnrollmentStatusRequestHandler),
     (r"/dashboard/logs", dashboard_logs.DashboardLogsRequestHandler),
     (r"/dashboard/sessions", session.DashboardSessionRequestHandler),
     (r"/dashboard/violations", violations.DashboardViolationRequestHandler),
@@ -49,26 +48,26 @@ url_patterns=[
     (r"/update_token", update_token.UpdateTokenRequestHandler),
 
     (r"/android_profile\.apk(.*)", tornado.web.StaticFileHandler,
-            {'path':'/opt/toppatch/assets/android/MobileVaultAgent.apk'}),
+        {'path': '/opt/toppatch/assets/android/MobileVaultAgent.apk'}),
 
     (r"/login.html(.*)", tornado.web.StaticFileHandler,
-               {'path':'/opt/toppatch/mv/media/app/login.html'}),
+        {'path': '/opt/toppatch/mv/media/app/login.html'}),
 
     (r"/invalid.html", tornado.web.StaticFileHandler,
-               {'path':'/opt/toppatch/mv/media/app/error_invalid.html'}),
+        {'path': '/opt/toppatch/mv/media/app/error_invalid.html'}),
 
     (r"/core/(.*)", tornado.web.StaticFileHandler,
-                      {'path':'/opt/toppatch/mv/media/app/core/'}),
+        {'path': '/opt/toppatch/mv/media/app/core/'}),
 
     (r"/css/(.*)", tornado.web.StaticFileHandler,
-                {'path':'/opt/toppatch/mv/media/app/css/'}),
+        {'path': '/opt/toppatch/mv/media/app/css/'}),
 
     (r"/fonts/(.*)", tornado.web.StaticFileHandler,
-                {'path':'/opt/toppatch/mv/media/app/fonts/'}),
+        {'path': '/opt/toppatch/mv/media/app/fonts/'}),
 
     (r"/images/(.*)", tornado.web.StaticFileHandler,
-              {'path':'/opt/toppatch/mv/media/app/images/'}),
+        {'path': '/opt/toppatch/mv/media/app/images/'}),
 
     (r"/vendor/(.*)", tornado.web.StaticFileHandler,
-                  {'path':'/opt/toppatch/mv/media/app/vendor/'}),
+        {'path': '/opt/toppatch/mv/media/app/vendor/'}),
 ]

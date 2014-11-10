@@ -1,10 +1,10 @@
 import datetime
-import json
+# import json
 
-import psycopg2
-from base import *
+# import psycopg2
+from .base import *
 from logger import Logger
-from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT, adapt
+from psycopg2.extensions import adapt
 from db.constants import Constants as C
 
 
@@ -18,12 +18,17 @@ class ViolationsDBHelper(DBHelper):
         TAG = 'add_violation'
         if isinstance(device, str):
             try:
-                self.cursor.execute("""INSERT INTO {0} ({1}, {2})
+                self.cursor.execute(
+                    """INSERT INTO {0} ({1}, {2})
                                     VALUES (%s, %s) RETURNING id;""".format(
-                                    C.VIOLATION_TABLE, C.VIOLATION_TABLE_DEVICE,
-                                    C.VIOLATION_TABLE_TIMESTAMP), (str(device),
-                                        datetime.datetime.now(),))
-            except Exception, err:
+                    C.VIOLATION_TABLE,
+                    C.VIOLATION_TABLE_DEVICE,
+                    C.VIOLATION_TABLE_TIMESTAMP),
+                    (str(device),
+                     datetime.datetime.now(),
+                     ))
+
+            except Exception as err:
                 self.log.e(TAG, 'Exception : ' + repr(err))
                 return None
 
@@ -44,8 +49,8 @@ class ViolationsDBHelper(DBHelper):
                 self.cursor.execute(""" UPDATE violations set
                     deleted = True WHERE device_id = {0} RETURNING id
                     """.format(adapt(device_id)))
-            except Exception, err:
-                self.log.e(TAG, 'Exception : '+ repr(err))
+            except Exception as err:
+                self.log.e(TAG, 'Exception : ' + repr(err))
                 return None
 
             if self.cursor.rowcount > 0:
@@ -57,16 +62,15 @@ class ViolationsDBHelper(DBHelper):
         else:
             self.log.e(TAG, 'Device id is not string type')
 
-    
     def get_violation(self, violation_id, pluck=None):
         TAG = 'get_violation'
 
         if pluck is None:
             try:
-                self.cursor.execute("SELECT *  FROM " + C.VIOLATION_TABLE + \
-                                    " WHERE " + C.VIOLATION_TABLE_ID + \
+                self.cursor.execute("SELECT *  FROM " + C.VIOLATION_TABLE +
+                                    " WHERE " + C.VIOLATION_TABLE_ID +
                                     " = " + str(violation_id))
-            except Exception, err:
+            except Exception as err:
                 self.log.e(TAG, 'Exception: ' + repr(err))
                 return None
 
@@ -79,18 +83,26 @@ class ViolationsDBHelper(DBHelper):
 
                 return return_dict
             else:
-                self.log.e(TAG, 'Not able to perform select operation on Violation table')
+                self.log.e(
+                    TAG,
+                    'Not able to perform select operation on Violation table')
                 return None
-        elif type(pluck) == list:
-            
+        elif isinstance(pluck, list):
+
             query_var = ','.join([str(i) for i in pluck])
 
             try:
-                self.cursor.execute("SELECT "+ query_var+ " FROM " + \
-                        C.DEVICE_TABLE + " WHERE " + \
-                        C.VIOLATION_TABLE_ID + " = " + str(violation_id))
-            
-            except Exception, err:
+                self.cursor.execute(
+                    "SELECT " +
+                    query_var +
+                    " FROM " +
+                    C.DEVICE_TABLE +
+                    " WHERE " +
+                    C.VIOLATION_TABLE_ID +
+                    " = " +
+                    str(violation_id))
+
+            except Exception as err:
                 self.log.e(TAG, 'Exception: ' + repr(err))
                 return None
 
@@ -103,21 +115,22 @@ class ViolationsDBHelper(DBHelper):
                     i = i + 1
                 return return_dict
             else:
-                self.log.e(TAG, 'Not Able to perform select operation on Violation table')
+                self.log.e(
+                    TAG,
+                    'Not Able to perform select operation on Violation table')
                 return None
         else:
             self.log.e(TAG, 'Type of violation id is not string')
             return None
-
-
 
     def get_violations(self, device=None):
         TAG = 'get_violations'
 
         if device is None:
             try:
-                self.cursor.execute("SELECT * FROM {0};".format(C.VIOLATION_TABLE))
-            except Exception, err:
+                self.cursor.execute(
+                    "SELECT * FROM {0};".format(C.VIOLATION_TABLE))
+            except Exception as err:
                 self.log.e(TAG, 'Exception: ' + repr(err))
                 return None
 
@@ -132,14 +145,16 @@ class ViolationsDBHelper(DBHelper):
                     return_array.append(return_dict)
                 return return_array
             else:
-                self.log.e(TAG, 'Not able to perform select operation on Violation table')
+                self.log.e(
+                    TAG,
+                    'Not able to perform select operation on Violation table')
                 return None
         elif isinstance(device, str):
             try:
-                self.cursor.execute("SELECT *  FROM " + C.VIOLATION_TABLE + \
-                                    " WHERE " + C.VIOLATION_TABLE_DEVICE + \
+                self.cursor.execute("SELECT *  FROM " + C.VIOLATION_TABLE +
+                                    " WHERE " + C.VIOLATION_TABLE_DEVICE +
                                     " = " + str(device))
-            except Exception, err:
+            except Exception as err:
                 self.log.e(TAG, 'Exception: ' + repr(err))
                 return None
 
@@ -154,15 +169,16 @@ class ViolationsDBHelper(DBHelper):
                     return_array.append(return_dict)
                 return return_array
             else:
-                self.log.e(TAG, 'Not Able to perform select operation on Violation table')
+                self.log.e(
+                    TAG,
+                    'Not Able to perform select operation on Violation table')
                 return None
         else:
             self.log.e(TAG, 'Type of device id is not string')
             return None
 
-
     def get_violations_with_pages(self, company_id, offset=None, count=None):
-        TAG= 'get_violations_with_pages'
+        TAG = 'get_violations_with_pages'
 
         if offset is None:
             offset = 0
@@ -195,7 +211,7 @@ class ViolationsDBHelper(DBHelper):
                         ORDER BY violations.timestamp DESC
                         OFFSET {1} LIMIT {2};
                         """.format(company_id, offset, count))
-        except Exception, err:
+        except Exception as err:
             self.log.e(TAG, 'Exception: ' + repr(err))
             return None, total_count
 
@@ -203,16 +219,23 @@ class ViolationsDBHelper(DBHelper):
             rows = self.cursor.fetchall()
             return_array = []
 
-            mapping_list = ['user_device', 'user_device_os', 'user_id',
-                        'user_name', 'user_team', 'user_role', 'time_stamp']
+            mapping_list = [
+                'user_device',
+                'user_device_os',
+                'user_id',
+                'user_name',
+                'user_team',
+                'user_role',
+                'time_stamp']
             for row in rows:
                 return_dict = dict(zip(mapping_list, row))
                 return_array.append(return_dict)
 
             return return_array, total_count
         else:
-            self.log.e(TAG,
-                    'Not able to perform select operation on Violation table')
+            self.log.e(
+                TAG,
+                'Not able to perform select operation on Violation table')
             return None, total_count
 
     def get_violation_count(self, company_id, device_id=None):
@@ -225,7 +248,7 @@ class ViolationsDBHelper(DBHelper):
                         WHERE users.company_id={0} AND users.deleted=False
                         AND violations.deleted = False;
                         """.format(str(company_id)))
-            except Exception, err:
+            except Exception as err:
                 self.log.e(TAG, 'Exception : ' + repr(err))
                 return None
 
@@ -237,11 +260,11 @@ class ViolationsDBHelper(DBHelper):
                 return None
         elif isinstance(device_id, str):
             try:
-                self.cursor.execute("SELECT COUNT(*) FROM " + \
-                                    C.VIOLATION_TABLE + " WHERE " + \
-                                    C.VIOLATION_TABLE_DEVICE + " = " + \
+                self.cursor.execute("SELECT COUNT(*) FROM " +
+                                    C.VIOLATION_TABLE + " WHERE " +
+                                    C.VIOLATION_TABLE_DEVICE + " = " +
                                     device_id)
-            except Exception, err:
+            except Exception as err:
                 self.log.e(TAG, 'Exception : ' + repr(err))
                 return None
 

@@ -22,24 +22,25 @@ class PreEnrollRequestHandler(SuperHandler):
     def get(self):
 
         #self.add_header('Access-Control-Allow-Origin', '*')
-        self.set_header ('Content-Type', 'application/json')
-        PreEnrollGetHandlerThread(self, callback=self.finish,
-                    company_id=self.get_current_company()).start()
-
+        self.set_header('Content-Type', 'application/json')
+        PreEnrollGetHandlerThread(
+            self,
+            callback=self.finish,
+            company_id=self.get_current_company()).start()
 
 
 class PreEnrollGetHandlerThread(threading.Thread):
     final_dict = {}
+
     def __init__(self, request=None, callback=None,
-                         company_id=None, *args, **kwargs):
+                 company_id=None, *args, **kwargs):
         super(PreEnrollGetHandlerThread, self).__init__(*args, **kwargs)
         self.request = request
         self.callback = callback
         self.company_id = company_id
 
-
     def run(self):
-        #Return All the users in the User table
+        # Return All the users in the User table
 
         company_id = self.company_id
 
@@ -49,7 +50,7 @@ class PreEnrollGetHandlerThread(threading.Thread):
         role = RoleDBHelper()
         role_list = role.get_roles(company_id)
         if role_list is None:
-            log.i(TAG,'No user in User Table')
+            log.i(TAG, 'No user in User Table')
         else:
             role_array = []
             for roles in role_list:
@@ -64,11 +65,10 @@ class PreEnrollGetHandlerThread(threading.Thread):
 
             self.final_dict['roles'] = role_array
 
-
         team = TeamDBHelper()
         team_list = team.get_teams(company_id)
         if team_list is None:
-            log.i(TAG,'No team in Team Table')
+            log.i(TAG, 'No team in Team Table')
         else:
             team_array = []
             for teams in team_list:

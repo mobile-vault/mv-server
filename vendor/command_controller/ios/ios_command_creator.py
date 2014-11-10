@@ -1,13 +1,8 @@
 import base64
 import threading
 
-import tornado.ioloop
-import tornado.web
-from tornado.web import asynchronous
-
 from vendor.command_controller.ios.create_policy_with_dict import PolicyCreater
 from db.constants import Constants as c
-from db.helpers.device import DeviceDBHelper
 from db.helpers.device_details import DeviceDetailsDBHelper
 from logger import Logger
 
@@ -17,11 +12,9 @@ except ImportError:
     import xml.etree.ElementTree as ET
 
 
-
 class IOSCommandCreatorThread(threading.Thread):
     log = 'log'
     command_profile = 'command_profile'
-
 
     def __init__(self, action, command_attributes, command_uuid, device_id):
         threading.Thread.__init__(self)
@@ -32,8 +25,6 @@ class IOSCommandCreatorThread(threading.Thread):
         self.command_uuid = command_uuid
         self.device_id = device_id
 
-
-
 #### Main function which will call other functions ###########################
     def run(self):
         self.log = Logger('IOSCommandCreatorThread')
@@ -41,12 +32,12 @@ class IOSCommandCreatorThread(threading.Thread):
         print 'action = ' + str(self.action)
         if self.action == 'policy':
             print 'In polcy condition'
-            #print 'command attributes'
-            #print self.command_attributes
+            # print 'command attributes'
+            # print self.command_attributes
             thread1 = PolicyCreater(self.command_attributes)
             thread1.start()
             thread1.join()
-            ### call the policy function
+            # call the policy function
 
             finalProfile = thread1.profile
             print '\n\nfinalProfile in ios_command\n' + str(finalProfile)
@@ -72,13 +63,11 @@ class IOSCommandCreatorThread(threading.Thread):
             string2 = ET.SubElement(dict, "string")
             string2.text = str(self.command_uuid)
 
-            #print ET.tostring(installProfile)
+            # print ET.tostring(installProfile)
             self.command_profile = ET.tostring(installProfile)
 
-
-
         elif self.action == 'erase_device':
-        ## Create the Erase Device XML
+            # Create the Erase Device XML
             earseDevice = ET.Element('plist')
             earseDevice.attrib['version'] = '1.0'
             dict = ET.SubElement(earseDevice, "dict")
@@ -96,7 +85,7 @@ class IOSCommandCreatorThread(threading.Thread):
             self.command_profile = ET.tostring(earseDevice)
 
         elif self.action == 'device_lock':
-        ## Create the Device Lock XML
+            # Create the Device Lock XML
             deviceLock = ET.Element('plist')
             deviceLock.attrib['version'] = '1.0'
             dict = ET.SubElement(deviceLock, "dict")
@@ -114,16 +103,17 @@ class IOSCommandCreatorThread(threading.Thread):
             self.command_profile = ET.tostring(deviceLock)
 
         elif self.action == 'clear_passcode':
-        ## First find the unlock Token of the device
+            # First find the unlock Token of the device
             if self.device_id is None:
                 self.log.e(TAG, 'No device ID of UUID = ' + str(
-                                                    self.command_uuid))
+                    self.command_uuid))
             else:
                 device_id = str(self.device_id)
                 device_detail = DeviceDetailsDBHelper()
-                device_detail_dict = device_detail.get_device_details(device_id)
+                device_detail_dict = device_detail.get_device_details(
+                    device_id)
                 json_extras = device_detail_dict.get(
-                                                c.DEVICE_DETAILS_TABLE_EXTRAS)
+                    c.DEVICE_DETAILS_TABLE_EXTRAS)
                 device_unlock_token = str(json_extras.get('unlock_token'))
 
                 if device_unlock_token is None:
@@ -131,7 +121,7 @@ class IOSCommandCreatorThread(threading.Thread):
                                             Device ID = ' + str(device_id))
                 else:
 
-                ## Create the Clear Passcode XML
+                    # Create the Clear Passcode XML
                     clearPasscode = ET.Element('plist')
                     clearPasscode.attrib['version'] = '1.0'
                     dict = ET.SubElement(clearPasscode, "dict")
@@ -152,15 +142,14 @@ class IOSCommandCreatorThread(threading.Thread):
                     string2.text = str(self.command_uuid)
                     self.command_profile = ET.tostring(clearPasscode)
 
-
         elif self.action == 'install_application':
-        ## First get the APP ID
+            # First get the APP ID
             app_id = str(self.command_attributes[0].get('app_id'))
             if app_id is None:
                 self.log.e(TAG, 'App ID is not sent with the command. \
                            CommandUUID = ' + str(self.command_uuid))
             else:
-            ## Create the Install Application XML
+                # Create the Install Application XML
                 installApplication = ET.Element('plist')
                 installApplication.attrib['version'] = '1.0'
                 dict = ET.SubElement(installApplication, "dict")
@@ -181,11 +170,10 @@ class IOSCommandCreatorThread(threading.Thread):
                 string2.text = str(self.command_uuid)
                 self.command_profile = ET.tostring(installApplication)
 
-
         elif self.action == 'remove_application':
-        ## First get the APP ID
+            # First get the APP ID
             app_identifier = str(self.command_attributes[0].get(
-                                        'app_identifier'))
+                'app_identifier'))
             if app_identifier is None:
                 self.log.e(TAG, 'App Identifier is not sent with the command. \
                            CommandUUID = ' + str(self.command_uuid))
@@ -211,7 +199,7 @@ class IOSCommandCreatorThread(threading.Thread):
                 self.command_profile = ET.tostring(removeApplication)
 
         elif self.action == 'installed_application_list':
-        ## Create the Device Lock XML
+            # Create the Device Lock XML
             installed_app_list = ET.Element('plist')
             installed_app_list.attrib['version'] = '1.0'
             dict = ET.SubElement(installed_app_list, "dict")
@@ -307,7 +295,8 @@ class IOSCommandCreatorThread(threading.Thread):
             IsSupervised.text = 'IsSupervised'
 
             IsDeviceLocatorServiceEnabled = ET.SubElement(array, 'string')
-            IsDeviceLocatorServiceEnabled.text = 'IsDeviceLocatorServiceEnabled'
+            IsDeviceLocatorServiceEnabled.text = (
+                'IsDeviceLocatorServiceEnabled')
 
             IsDoNotDisturbInEffect = ET.SubElement(array, 'string')
             IsDoNotDisturbInEffect.text = 'IsDoNotDisturbInEffect'
@@ -363,18 +352,16 @@ class IOSCommandCreatorThread(threading.Thread):
             CurrentMNC = ET.SubElement(array, 'string')
             CurrentMNC.text = 'CurrentMNC'
 
-
             key3 = ET.SubElement(dict, "key")
             key3.text = "CommandUUID"
             string2 = ET.SubElement(dict, "string")
             string2.text = str(self.command_uuid)
 
-
             self.command_profile = ET.tostring(deviceInfo)
 
         elif self.action == 'remove_profile':
             profile_identifier = str(self.command_attributes[0].get(
-                                                'profile_identifier'))
+                'profile_identifier'))
             removeProfile = ET.Element('plist')
             removeProfile.attrib['version'] = '1.0'
             dict = ET.SubElement(removeProfile, "dict")

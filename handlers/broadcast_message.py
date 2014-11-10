@@ -7,10 +7,13 @@ from handlers.super import SuperHandler
 from logger import Logger
 from tasks import create_command_handler_task
 
+
 class BroadCastMessageHandler(SuperHandler):
 
     def options(self):
-        self.add_header('Access-Control-Allow-Methods', 'GET,POST, PUT,OPTIONS')
+        self.add_header(
+            'Access-Control-Allow-Methods',
+            'GET,POST, PUT,OPTIONS')
         self.add_header('Access-Control-Allow-Headers',
                         'Origin, X-Requested-With, Content-Type, Accept')
         #self.add_header('Access-Control-Allow-Origin', '*')
@@ -24,13 +27,14 @@ class BroadCastMessageHandler(SuperHandler):
         #self.add_header('Access-Control-Allow-Origin', '*')
         self.set_header('Content-Type', 'application/json')
         BroadCastMesageThread(self, callback=self.onComplete,
-                     company_id=self.get_current_company()).start()
+                              company_id=self.get_current_company()).start()
 
 
 class BroadCastMesageThread(threading.Thread):
     log = 'log'
+
     def __init__(self, request=None, callback=None, company_id=None,
-                                                    *args, **kwargs):
+                 *args, **kwargs):
         super(BroadCastMesageThread, self).__init__(*args, **kwargs)
         self.request = request
         self.callback = callback
@@ -42,7 +46,7 @@ class BroadCastMesageThread(threading.Thread):
         json_data = {}
 
         self.log = Logger('BroadCastMesageThread')
-        TAG = 'run'
+        #TAG = 'run'
 #        print 'In BroadCastMesageThread\'s POST'
 #        print self.request.request.body
         data = json.loads(self.request.request.body)
@@ -56,11 +60,17 @@ class BroadCastMesageThread(threading.Thread):
 
             create_command_handler_task.delay(json_data)
 
-            opJson = json.dumps({'pass': True,
-                        'message': 'Message will be delivered to devices immediately.'})
+            opJson = json.dumps(
+                {
+                    'pass': True,
+                    'message': 'Message will be delivered to devices \
+immediately.'})
+
         else:
-            opJson = json.dumps({'pass': False,
-                        'message': 'Please send some human readable broadcast message'})
+            opJson = json.dumps(
+                {'pass': False,
+                    'message': 'Please send some human readable broadcast \
+message'})
 
         self.request.write(opJson)
         tornado.ioloop.IOLoop.instance().add_callback(self.callback)

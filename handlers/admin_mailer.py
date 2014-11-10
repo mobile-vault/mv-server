@@ -2,13 +2,13 @@
 This script mainly will be used to send mail to admin about the
 violation done by any user.
 '''
-from os.path import abspath, dirname
-from sys import path
+# from os.path import abspath, dirname
+# from sys import path
 #import ipdb
 
 from os import environ
 from boto import ses
-import json
+# import json
 from itsdangerous import TimedJSONWebSignatureSerializer
 
 from logger import Logger
@@ -17,19 +17,21 @@ from db.helpers.device import DeviceDBHelper
 from db.helpers.user import UserDBHelper
 from db.helpers.company import CompanyDBHelper
 from db.helpers.base import DBHelper
-from tornado.template import Template
+# from tornado.template import Template
 from tornado.template import Loader
 
 
-ses_conn = ses.connect_to_region('us-east-1',
-            aws_access_key_id=environ.get('AWS_SES_ACCESS_KEY_ID'),
-            aws_secret_access_key=environ.get('AWS_SES_SECRET_ACCESS_KEY'))
+ses_conn = ses.connect_to_region(
+    'us-east-1',
+    aws_access_key_id=environ.get('AWS_SES_ACCESS_KEY_ID'),
+    aws_secret_access_key=environ.get('AWS_SES_SECRET_ACCESS_KEY'))
 
 loader = Loader("/opt/toppatch/mv/media/app/")
 
+
 def admin_mailer(device_id, violation_id, *args, **kwargs):
 
-    TAG='admin mailer'
+    TAG = 'admin mailer'
     base = DBHelper()
     cur = base.cursor
     log = Logger('AdminMailer')
@@ -54,8 +56,6 @@ def admin_mailer(device_id, violation_id, *args, **kwargs):
         device_os = None
         device_os_version = None
         user_info = None
-
-
 
     ### User information ###
     if user_info:
@@ -85,42 +85,53 @@ def admin_mailer(device_id, violation_id, *args, **kwargs):
             cur.execute("""SELECT * FROM admin_profile
             WHERE company_id = {0}""".format(company_id))
 
-        except Exception, err:
+        except Exception as err:
             log.e(TAG, 'Exception : ' + repr(err))
 
         if cur.rowcount > 0:
             rows = cur.fetchall()
             for row in rows:
-                #ipdb.set_trace()
+                # ipdb.set_trace()
                 email_list.append(row[1])
 
         else:
-            log.i(TAG, """No admin user found for the violated device with company id : {0}""".format(company_id))
+            log.i(
+                TAG,
+                """No admin user found for the violated device with company
+id : {0}""".format(company_id))
             print "Query over admin went wrong"
     else:
         company_name = None
 
-
-    if len(email_list) > 0 and all(x is not None for x in (username,
-                 company_name, violation_time, device_os)):
+    if len(email_list) > 0 and all(
+        x is not None for x in (
+            username,
+            company_name,
+            violation_time,
+            device_os)):
         message = loader.load('violation_mail.html').generate(
-                username=username, company_name=company_name,
-                violation_time=violation_time, device_os=device_os,
-                device_os_version=device_os_version)
+            username=username, company_name=company_name,
+            violation_time=violation_time, device_os=device_os,
+            device_os_version=device_os_version)
 
         try:
             ses_conn.send_email('mv@toppatch.com',
-                'User MDM Violations Notification',
-                        message, email_list, format='html')
-        except Exception, err:
+                                'User MDM Violations Notification',
+                                message, email_list, format='html')
+        except Exception as err:
             log.e(TAG, "Error in sending mail from ses side.")
 
     else:
-        log.i(TAG, """No admin found for the violated device with company id : {0}""".format(company_id))
+        log.i(
+            TAG,
+            """No admin found for the violated device with company id :
+{0}""".format(company_id))
 
 
 def admin_signup(admin_id, company_id, admin_email, company_email):
 
+    TAG = 'admin signup'
+    log = Logger('AdminSignUp')
 
     salt_key = environ.get('salt_key')
     json_url_key = environ.get('json_url_key')
@@ -131,20 +142,18 @@ def admin_signup(admin_id, company_id, admin_email, company_email):
     danger_signer = TimedJSONWebSignatureSerializer(json_url_key)
     danger_signer.expires_in = 86400
     hash_url = danger_signer.dumps({'cmd_hash': company_id,
-                               'adm_hash': admin_id}, salt=salt_key)
+                                    'adm_hash': admin_id}, salt=salt_key)
     link_url = str(environ.get('SERVER_CNAME')) + '/activation/' + hash_url
 
-
     message = loader.load('verification_mail.html').generate(
-                    company_name=company_email, activation_link=link_url)
+        company_name=company_email, activation_link=link_url)
 
     try:
         ses_conn.send_email('mv@toppatch.com',
-                'MDM Trial Activation Link', message,
-                 [admin_email], format='html')
-    except Exception, err:
-        log.e(TAG, "Error in sending mail from ses side.")
-
+                            'MDM Trial Activation Link', message,
+                            [admin_email], format='html')
+    except Exception as err:
+        log.e(TAG, "Error {0} in sending mail from ses side.".format(err))
 
 
 if __name__ == '__main__':
